@@ -5,7 +5,7 @@ import cv2
 cords_white_buttons = {}
 cords = []
 
-image = cv2.imread("7.png")
+image = cv2.imread("5.png")
 
 
 """ ---------------------------- Подготовка изображения ---------------------------"""
@@ -35,14 +35,16 @@ canny = np.array(nearest_neigbours, dtype=np.uint8)
 
 """ ----------------------------- 1й уровень обработки -----------------------------"""
 j = 0
+level = 323
 while j < image.shape[1]:
-    if canny[image.shape[0]-323][j] > 0:
+    if canny[image.shape[0]-level][j] > 0:
         j_val = j
-        while canny[image.shape[0]-323][j] > 0 and j < image.shape[1]:
+        while canny[image.shape[0]-level][j] > 0 and j < image.shape[1]:
             j += 1
         j_val = j_val + int((j - j_val) / 2)
         cords.append(j_val-1)
     j += 1
+
 
 
 """------------ 2й уровень обработки (алгоритм) доработаю завтра нужно сделать пару моментов -------------"""
@@ -80,19 +82,6 @@ cords_white_buttons.update([(1, [0, cords[0]])])
 for i in range(1, len(cords)):
     cords_white_buttons.update([(score, [cords[i-1], cords[i]])])
     score += 1
-
-
-# Рисуем прорези для белых клавиш
-i = 1
-j = 0
-while i <= len(cords_white_buttons):
-    while j < 2:
-        for k in range(int(image.shape[0]/1.5), image.shape[0]):
-            cv2.circle(image, (cords_white_buttons[i][1], k), 1, (255, 0, 0), -1)
-
-        j += 1
-    i += 1
-    j = 0
 
 
 """ ------------------------ Алгоритм для разметки чёрных клавиш -----------------------"""
@@ -138,13 +127,60 @@ for i in range(1, len(cords_white_buttons)):
             (cords_white_buttons[i + 1][1] - cords_white_buttons[i + 1][0]) * 9 / 30)
         black_cords.update([(score, [l_black, r_black])])
 
+print(cords_white_buttons)
+low_black_button = 0
+low_high_cords = {}
+n_button = 1
+# разметка нижней границы чёрных клавиш
+for n in range(1, len(cords_white_buttons)+1):
+    if n in [1, 4, 7, 11, 14, 18, 21, 25, 28, 32, 35, 39, 42, 46, 49, 52]:
+        pass
+
+    else:
+
+        if n in [2, 5, 8, 9, 12, 15, 16, 19, 22, 23, 26, 29, 30, 33, 36, 37, 40, 43, 44, 47, 50, 51]:
+            print(n)
+            j = cords_white_buttons[n][0] + int((cords_white_buttons[n][1] - cords_white_buttons[n][0])/3)
+
+        if n in [3, 6, 10, 13, 17, 20, 24, 27, 31, 34, 38, 41, 45, 48]:
+            print(n)
+            j = cords_white_buttons[n][0] + int((cords_white_buttons[n][1] - cords_white_buttons[n][0])/1.5)
+
+        i = 0
+        while canny[image.shape[0]-level+i][j] < 1:
+            i = i - 1
+            if i < -image.shape[0]:
+                i = low_black_button
+                break
+        low_black_button = i + image.shape[0] - level
+
+        # разметка верхней границы чёрных клавиш
+        a1 = cords_white_buttons[2][1] - cords_white_buttons[2][0]
+        high_black_button = low_black_button - a1*4 - 10
+
+        low_high_cords.update([(n_button, [low_black_button, high_black_button])])
+        n_button += 1
+
+print(low_high_cords)
+
+# Рисуем прорези для белых клавиш
+i = 1
+j = 0
+while i <= len(cords_white_buttons):
+    while j < 2:
+        for k in range(int(image.shape[0]/1.5), image.shape[0]):
+            cv2.circle(image, (cords_white_buttons[i][1], k), 1, (255, 0, 0), -1)
+
+        j += 1
+    i += 1
+    j = 0
 
 # Рисуем чёрные клавиши
 i = 1
 j = 0
 while i <= len(black_cords):
     while j < 2:
-        for k in range(0, int(image.shape[0]/1.5)):
+        for k in range(low_high_cords[i][1], low_high_cords[i][0]):
             cv2.circle(image, (black_cords[i][0], k), 0, (0, 0, 255), -1)
             cv2.circle(image, (black_cords[i][1], k), 0, (0, 0, 255), -1)
 
@@ -153,9 +189,20 @@ while i <= len(black_cords):
     j = 0
 
 
-print(len(cords_white_buttons))
+a = 1
+while a <= len(black_cords):
+    i = black_cords[a][0]
+    while i <= black_cords[a][1]:
+        cv2.circle(image, (i, low_high_cords[a][0]), 0, (0, 0, 255), -1)
+        cv2.circle(image, (i, low_high_cords[a][1]), 0, (0, 0, 255), -1)
+        i += 1
+    a += 1
+
+
+print(len(canny[0]))
 print(cords_white_buttons)
 print(black_cords)
+print(low_high_cords)
 
 
 cv2.imshow('res', image)
