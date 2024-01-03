@@ -11,8 +11,9 @@ class Piano:
         self.black_cords = {}
         self.low_high_cords = {}
         self.centers = []
+        self.final_cords = {}
         self.image = image
-        self.level = 10  # 323
+        self.level = 90  # 323
         self.alpha = 10
         self.beta = 2.5
         self.num = 1
@@ -147,12 +148,10 @@ class Piano:
             else:
 
                 if _n in [2, 5, 8, 9, 12, 15, 16, 19, 22, 23, 26, 29, 30, 33, 36, 37, 40, 43, 44, 47, 50, 51]:
-                    print(_n)
                     _j = (self.cords_white_buttons[_n][0]
                           + int((self.cords_white_buttons[_n][1] - self.cords_white_buttons[_n][0]) / 3))
 
                 if _n in [3, 6, 10, 13, 17, 20, 24, 27, 31, 34, 38, 41, 45, 48]:
-                    print(_n)
                     _j = (self.cords_white_buttons[_n][0]
                           + int((self.cords_white_buttons[_n][1] - self.cords_white_buttons[_n][0]) / 1.5))
 
@@ -174,20 +173,80 @@ class Piano:
     def center_marking(self):
 
         # Разметка клавиш по центральной координате
-        for _q in range(1, len(self.cords_white_buttons) + 1):
-            self.centers.append(int(self.cords_white_buttons[_q][0]
-                                    + (self.cords_white_buttons[_q][1] - self.cords_white_buttons[_q][0]) / 2))
+        self.centers.append(int(self.cords_white_buttons[1][0]
+                                + (self.black_cords[1][0] - self.cords_white_buttons[1][0])*0.5))
+
+        for _q in range(2, len(self.black_cords) + 1):
+
+            _temp = self.black_cords[_q-1][1] - self.black_cords[_q-1][0]
+
+            if (self.black_cords[_q][0]-self.black_cords[_q-1][1])/_temp > 1.3:
+
+                self.centers.append(int(self.black_cords[_q-1][1]
+                                        + (self.black_cords[_q][0]-self.black_cords[_q-1][1])*0.25))
+                self.centers.append(int(self.black_cords[_q-1][1]
+                                        + (self.black_cords[_q][0]-self.black_cords[_q-1][1])*0.75))
+            else:
+
+                self.centers.append(int(self.black_cords[_q-1][1]
+                                        + (self.black_cords[_q][0]-self.black_cords[_q-1][1])*0.5))
+
+        self.centers.append(int(self.black_cords[36][1]
+                                + (self.cords_white_buttons[51][1] - self.black_cords[36][1])*0.5))
+        self.centers.append(int(self.black_cords[36][1]
+                                + (self.cords_white_buttons[51][1] - self.black_cords[36][1])*1.75))
 
         for _q in range(1, len(self.black_cords) + 1):
+
             self.centers.append(int(self.black_cords[_q][0]
                                     + (self.black_cords[_q][1] - self.black_cords[_q][0]) / 2))
 
         self.centers.sort()
 
 
+    def final_marking(self):
+
+        _data = []
+        _s = 1
+        _k = 1
+
+        for _i in range(1, len(self.cords_white_buttons)+1):
+            if _i == 1:    # Первая клавиша
+                _data.append(0)
+                _data.append(self.black_cords[1][0])
+            elif _i in [2, 5, 9, 12, 16, 19, 23, 26, 30, 33, 37, 40, 44, 47, 51]:    # Правые белые
+                _data.append(self.black_cords[_i-_s][1])
+                _data.append(self.cords_white_buttons[_i][1])
+                _s += 1
+            elif _i in [3, 6, 10, 13, 17, 20, 24, 27, 31, 34, 38, 41, 45, 48]:    # Левые белые
+                _data.append(self.cords_white_buttons[_i][0])
+                _data.append(self.black_cords[_i-_k][0])
+                _k += 1
+            elif _i == 52:    # Последняя белая
+                _data.append(self.cords_white_buttons[_i][0])
+                _data.append(self.cords_white_buttons[_k][1])
+
+        for _i in range(2, len(self.black_cords)+1):    # Центральные белые
+            if not ((self.black_cords[_i][0]-self.black_cords[_i-1][1])
+                    / (self.black_cords[_i][1]-self.black_cords[_i][0]) > 1.3):
+                _data.append(self.black_cords[_i-1][1])
+                _data.append(self.black_cords[_i][0])
+
+        for _i in range(1, len(self.black_cords)+1):    # Все чёрные
+            _data.append(self.black_cords[_i][0])
+            _data.append(self.black_cords[_i][1])
+
+        _data.sort()
+
+        _b = 1
+        for _i in range(0, len(_data), 2):
+            self.final_cords.update([(_b, [_data[_i], _data[_i+1]])])
+            _b += 1
+
+
 if __name__ == "__main__":
 
-    image = cv2.imread("ideal.png")
+    image = cv2.imread("12.png")
     piano = Piano(image)
 
     piano.prep()
@@ -197,48 +256,69 @@ if __name__ == "__main__":
     piano.black_marking()
     piano.marking_low_high()
     piano.center_marking()
+    piano.final_marking()
 
-    # Рисуем прорези для белых клавиш
-    i = 1
-    j = 0
-    while i <= len(piano.cords_white_buttons):
-        while j < 2:
-            for k in range(int(image.shape[0]/1.5), image.shape[0]):
-                cv2.circle(image, (piano.cords_white_buttons[i][1], k), 1, (255, 0, 0), -1)
+    # # Рисуем прорези для белых клавиш
+    # i = 1
+    # j = 0
+    # while i <= len(piano.cords_white_buttons):
+    #     while j < 2:
+    #         for k in range(int(image.shape[0]/1.5), image.shape[0]):
+    #             cv2.circle(image, (piano.cords_white_buttons[i][1], k), 1, (255, 0, 0), -1)
+    #
+    #         j += 1
+    #     i += 1
+    #     j = 0
+    #
+    # # Рисуем чёрные клавиши
+    # i = 1
+    # while i <= len(piano.black_cords):
+    #     while j < 2:
+    #         for k in range(piano.low_high_cords[i][1], piano.low_high_cords[i][0]):
+    #             cv2.circle(image, (piano.black_cords[i][0], k), 0, (0, 0, 255), -1)
+    #             cv2.circle(image, (piano.black_cords[i][1], k), 0, (0, 0, 255), -1)
+    #
+    #         j += 1
+    #     i += 1
+    #     j = 0
+    #
+    # a = 1
+    # while a <= len(piano.black_cords):
+    #     i = piano.black_cords[a][0]
+    #     while i <= piano.black_cords[a][1]:
+    #         cv2.circle(image, (i, piano.low_high_cords[a][0]), 0, (0, 0, 255), -1)
+    #         cv2.circle(image, (i, piano.low_high_cords[a][1]), 0, (0, 0, 255), -1)
+    #         i += 1
+    #     a += 1
+    #
+    # # Рисуем центры всех клавиш
+    # for i in range(0, len(piano.centers)):
+    #     for p in range(0, 1000):
+    #         cv2.circle(image, (piano.centers[i], image.shape[0]-90-p), 1, (0, 255, 0), -1)
 
-            j += 1
-        i += 1
-        j = 0
+    # Рисуем финальные координаты
+    for i in range(1, len(piano.final_cords)+1):
+        cv2.line(image, [piano.final_cords[i][0], image.shape[0]-90-i*2],
+                 [piano.final_cords[i][1], image.shape[0]-90-i*2], (0, 0, 200))
 
-    # Рисуем чёрные клавиши
-    i = 1
-    while i <= len(piano.black_cords):
-        while j < 2:
-            for k in range(piano.low_high_cords[i][1], piano.low_high_cords[i][0]):
-                cv2.circle(image, (piano.black_cords[i][0], k), 0, (0, 0, 255), -1)
-                cv2.circle(image, (piano.black_cords[i][1], k), 0, (0, 0, 255), -1)
-
-            j += 1
-        i += 1
-        j = 0
-
-    a = 1
-    while a <= len(piano.black_cords):
-        i = piano.black_cords[a][0]
-        while i <= piano.black_cords[a][1]:
-            cv2.circle(image, (i, piano.low_high_cords[a][0]), 0, (0, 0, 255), -1)
-            cv2.circle(image, (i, piano.low_high_cords[a][1]), 0, (0, 0, 255), -1)
-            i += 1
-        a += 1
-
-    # Рисуем центры всех клавиш
-    for i in range(0, len(piano.centers)):
-        cv2.circle(image, (piano.centers[i], image.shape[0]-10), 3, (0, 255, 0), -1)
-
-    print(len(piano.canny[0]))
-    print(piano.cords_white_buttons)
-    print(piano.black_cords)
-    print(piano.low_high_cords)
+    # print(len(piano.canny[0]))
+    # print(piano.cords)
+    # print(piano.cords_white_buttons)
+    # print(piano.black_cords)
+    # print(piano.low_high_cords)
 
     cv2.imshow('res', image)
     cv2.waitKey(0)
+
+    # cap = cv2.VideoCapture("vid_1.mp4")
+    #
+    # while True:
+    #     _, img = cap.read()
+    #     for i in range(0, len(piano.centers)):
+    #         for p in range(0, 1000):
+    #             cv2.circle(img, (piano.centers[i], img.shape[0] - 323 - p), 1, (0, 255, 0), -1)
+    #
+    #     cv2.imshow('res', img)
+    #
+    #     if cv2.waitKey(50) & 0xFF == ord('q'):
+    #         break
