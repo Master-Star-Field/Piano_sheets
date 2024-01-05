@@ -13,7 +13,7 @@ class Piano:
         self.centers = []
         self.final_cords = {}
         self.image = image
-        self.level = 90  # 323
+        self.level = 10  # 323
         self.alpha = 10
         self.beta = 2.5
         self.num = 1
@@ -90,6 +90,9 @@ class Piano:
         for _i in range(1, len(self.cords)):
             self.cords_white_buttons.update([(_score, [self.cords[_i - 1], self.cords[_i]])])
             _score += 1
+
+        self.cords_white_buttons.update([(_score, [self.cords[-1], self.cords[-1] + (self.cords[-1]-self.cords[-2])])])
+        self.cords.append(self.cords[-1] + (self.cords[-1]-self.cords[-2]))
 
     def black_marking(self):
 
@@ -210,7 +213,7 @@ class Piano:
         _s = 1
         _k = 1
 
-        for _i in range(1, len(self.cords_white_buttons)+1):
+        for _i in range(1, len(self.cords_white_buttons)):
             if _i == 1:    # Первая клавиша
                 _data.append(0)
                 _data.append(self.black_cords[1][0])
@@ -222,9 +225,10 @@ class Piano:
                 _data.append(self.cords_white_buttons[_i][0])
                 _data.append(self.black_cords[_i-_k][0])
                 _k += 1
-            elif _i == 52:    # Последняя белая
-                _data.append(self.cords_white_buttons[_i][0])
-                _data.append(self.cords_white_buttons[_k][1])
+
+        # Последняя белая
+        _data.append(self.cords_white_buttons[52][0])
+        _data.append(self.cords_white_buttons[52][1])
 
         for _i in range(2, len(self.black_cords)+1):    # Центральные белые
             if not ((self.black_cords[_i][0]-self.black_cords[_i-1][1])
@@ -246,7 +250,7 @@ class Piano:
 
 if __name__ == "__main__":
 
-    image = cv2.imread("12.png")
+    image = cv2.imread("6.png")
     piano = Piano(image)
 
     piano.prep()
@@ -298,15 +302,17 @@ if __name__ == "__main__":
 
     # Рисуем финальные координаты
     for i in range(1, len(piano.final_cords)+1):
-        cv2.line(image, [piano.final_cords[i][0], image.shape[0]-90-i*2],
-                 [piano.final_cords[i][1], image.shape[0]-90-i*2], (0, 0, 200))
+        cv2.line(image, [piano.final_cords[i][0], image.shape[0]-10-i],
+                 [piano.final_cords[i][1], image.shape[0]-10-i], (0, 0, 200))
 
     # print(len(piano.canny[0]))
     # print(piano.cords)
     # print(piano.cords_white_buttons)
     # print(piano.black_cords)
     # print(piano.low_high_cords)
-
+    print(piano.final_cords)
+    print(piano.cords)
+    print(piano.cords_white_buttons)
     cv2.imshow('res', image)
     cv2.waitKey(0)
 
