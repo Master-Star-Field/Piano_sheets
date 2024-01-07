@@ -13,7 +13,7 @@ class Piano:
         self.centers = []
         self.final_cords = {}
         self.image = image
-        self.level = 10  # 323
+        self.level = 90  # 323
         self.alpha = 10
         self.beta = 2.5
         self.num = 1
@@ -244,23 +244,13 @@ class Piano:
 
         _b = 1
         for _i in range(0, len(_data), 2):
-            self.final_cords.update([(_b, [_data[_i], _data[_i+1]])])
+            if _b in [2, 5, 7, 10, 12, 14, 17, 19, 22, 24, 26, 29, 31, 34, 36, 38, 41, 43, 46, 48, 50, 53,
+                      55, 58, 60, 62, 65, 67, 70, 72, 74, 77, 79, 82, 84, 86]:
+                self.final_cords.update([(_b, [_data[_i], _data[_i+1], 0])])
+            else:
+                self.final_cords.update([(_b, [_data[_i], _data[_i+1], 1])])
+
             _b += 1
-
-
-if __name__ == "__main__":
-
-    image = cv2.imread("6.png")
-    piano = Piano(image)
-
-    piano.prep()
-    piano.holes()
-    piano.first_level()
-    piano.second_level()
-    piano.black_marking()
-    piano.marking_low_high()
-    piano.center_marking()
-    piano.final_marking()
 
     # # Рисуем прорези для белых клавиш
     # i = 1
@@ -300,21 +290,21 @@ if __name__ == "__main__":
     #     for p in range(0, 1000):
     #         cv2.circle(image, (piano.centers[i], image.shape[0]-90-p), 1, (0, 255, 0), -1)
 
-    # Рисуем финальные координаты
-    for i in range(1, len(piano.final_cords)+1):
-        cv2.line(image, [piano.final_cords[i][0], image.shape[0]-10-i],
-                 [piano.final_cords[i][1], image.shape[0]-10-i], (0, 0, 200))
+    # # Рисуем финальные координаты
+    # for i in range(1, len(piano.final_cords)+1):
+    #     cv2.line(image, [piano.final_cords[i][0], image.shape[0]-10-i],
+    #              [piano.final_cords[i][1], image.shape[0]-10-i], (0, 0, 200))
 
     # print(len(piano.canny[0]))
     # print(piano.cords)
     # print(piano.cords_white_buttons)
     # print(piano.black_cords)
     # print(piano.low_high_cords)
-    print(piano.final_cords)
-    print(piano.cords)
-    print(piano.cords_white_buttons)
-    cv2.imshow('res', image)
-    cv2.waitKey(0)
+    # print(piano.final_cords)
+    # print(piano.cords)
+    # print(piano.cords_white_buttons)
+    # cv2.imshow('res', image)
+    # cv2.waitKey(0)
 
     # cap = cv2.VideoCapture("vid_1.mp4")
     #
