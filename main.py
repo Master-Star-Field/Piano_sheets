@@ -33,7 +33,7 @@ while True:
 
     k = 18
     while k < 1909:
-        cv2.circle(matrix, (k, 100), 1, (255, 0, 0), -1)
+        #cv2.circle(matrix, (k, 100), 1, (255, 0, 0), -1)
         k += 37
 
 
