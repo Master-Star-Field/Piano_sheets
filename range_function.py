@@ -1,5 +1,7 @@
-def range_function(ranges: dict, boxes : list):
+import numpy as np
 
+
+def range_function(ranges: dict, boxes: np.array):
     """
     ranges - словарь диапазонов клавиш, формат: {key(номер клавиши) : [левая граница, правая граница]}
     notes - список нот в кадре, формат: {[[x1,y1, x2,y2]...]}
@@ -15,11 +17,8 @@ def range_function(ranges: dict, boxes : list):
     n = 1
     for note in notes:
         while n <= len(ranges):
-            #print(ranges[str(n)][0], ranges[str(n)][1], note[0], note[2])
-
-            if ranges[str(n)][0] > note[0] and ranges[str(n)][1]  < note[2]:
-                result[boxes.index(note)] = n
-
+            if ranges[str(n)][0] > note[0] and ranges[str(n)][1] < note[2]:
+                result[np.where((boxes == note).all(axis=1))[0][0]] = n
                 break
             n += 1
     return result
